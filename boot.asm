@@ -23,12 +23,48 @@ TestDiskExtension:
     cmp bx, 0xaa55          ; compare bx register with 0xaa55
     jne NotSupport
     
+LoadLoader:
+    ; The parameter we pass to the service is actually a structure. Here we define the structure
+    mov si, ReadPacket      ; set si register to the address of the structure
+    mov word[si], 0x10      ; offset 0, the size
+                            ; set the first 2 bytes of the structure to 0x10
+                            ; the first 2 bytes of the structure is the size of the structure
+                            ; we set it to 0x10 because the structure is 16 bytes long
+    mov word[si+2], 5       ; offset 2, number of sectors,
+                            ; the number of sector we want to read
+                            ; since the loader in this example is a small file, we simply read 5 sector which is
+                            ; enough space for the loader
+    
+    ; the next two words specify the memory location into which we want to read our file
+    ; we load the loader file into the memory address 7e00
+    mov word[si+4], 0x7e00  ; offset 4, the offset
+    mov word[si+6], 0       ; offset 6, segment
+    ; the logical address is 0x7e00:0, which is the physical address 0x7e00
 
+    ; the last two words are the 64-bit logical block address.
+    ; the loader file will be written into the second sector of the disk. Therefore, we use lba 1.
+    ; remember logical block address is  zero-based adress. Meaning that the first sector is sector 0, 
+    ; the second sector is sector 1, and so on.
+    mov dword[si+8], 1       ; offset 8, the lower half of the 64-bit address, we set to 1.
+    mov dword[si+0xc], 0     ; offset 0xc, the higher half of the 64-bit address, we set to 0.
+
+    mov dl, [DriveId]       ; set dl register to the drive id
+    mov ah, 0x42            ; set ah register to 0x42 (BIOS service 0x42 is to load the loader into memory)
+                            ; which mean we want to use disk extension service.
+    int 0x13                ; call BIOS service 0x42 to load the loader into memory    
+
+    ; if the service is not supported, the carry flag isset. So we just use jc function
+    jc ReadError            ; if carry flag is set, it means the disk does not have extensions, so we try again
+
+    ; When we successfully load the loader into memory, we can jump to the start of loader
+    mov dl, [DriveId]
+    jmp 0x7e00              ; jump to the start of loader
 
 ; this part print the message on the screen, so that we can see our system is running
 ; print character is done by calling BIOS service using interrupt 0x10
 ; before calling BIOS service, we need to set the parameters in the registers
-printMessage:               ; print message
+ReadError:               ; print message
+NotSupport:
     mov ah, 0x13            ; set ah register to 0x13 (BIOS service 0x13 is to print character)
     mov al, 1               ; register al specifies the write mode, we set it to 1 so that the cursor will be placed 
                             ; at the end of the string
@@ -44,17 +80,20 @@ printMessage:               ; print message
     mov cx, MessageLen      ; set cx register to the length of the message
     int 0x10                ; call BIOS service 0x13 to print the message
 
-NotSupport:
 End:
     hlt                     ; Hat instruction places the processor in a HALT state until an interrupt occurs
     jmp End                 ; create an infinite loop so that the processor will not execute random code after hlt
 
 DriveId: db 0               ; define a byte to hold the drive id
 
-Message: db "Disk extension is supported!"  ; message to be printed, db means define byte, so each character is 1 byte, 
+Message: db "We have error in boot process"  ; message to be printed, db means define byte, so each character is 1 byte, 
                             ; so the length of the message is 12 bytes.
 MessageLen: equ $ - Message ; calculate the length of the message, $ means the current address, 
                             ; so $ - Message means the current address minus the address of the message
+ReadPacket: times 16 db 0  ; define a structure to hold the parameter for the disk service
+                            ; the structure is 16 bytes long, so we define 16 bytes here
+                            ; we use times to repeat the db 16 times, so that we don't need to write db 16 times
+                            ; db means define byte, so each character is 1 byte, so the structure is 16 bytes long
 
 ; There the expression specifies how many times db is repeated, the $$ sign is the start address of the current section
 ; We only have one section, so $$ is the start address of the boot sector
