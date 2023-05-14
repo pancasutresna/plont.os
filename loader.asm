@@ -49,7 +49,56 @@ LoadKernel:
     ; we know that loading kernel failed and we jump to read error and stop here.
     jc ReadError
     
+GetMemInfoStart:
+    mov eax, 0xe820 ; get memory map, eax = 0xe820, ebx = 0, ecx = 24, edx = 0x534d4150
+    mov edx, 0x534d4150 ; asci code for 'SMAP' to edx, this is the signature for the memory map
+    mov ecx, 20 ; the size of the memory map entry, 20 bytes
+    mov edi, 0x9000 ; the memory address where we want to save the memory map, 0x9000
+    ; save the memory address in which we saved the memory block returned in register edi
+    
+    ; ebx should be 0 before we call the function. 
+    ; clear ebx using xor instruction
+    xor ebx, ebx
+    int 0x15 ; call the function
 
+    ; if the carry flag is set, means that the service e820 is not supported.
+    jc NotSupport
+
+    ; if it returns the memory info successfully, the carry flag will be cleared and we continue to 
+    ; retrieve the memory info
+
+GetMemInfo:
+    ; Adjust edit to point to the next memory map entry
+    add edi, 20 ; to receive the next memory block. each memory map entry is 20 bytes long
+    mov eax, 0xe820 ; get memory map, eax = 0xe820, ebx = 0, ecx = 24, edx = 0x534d4150
+    mov edx, 0x534d4150 ; asci code for 'SMAP' to edx, this is the signature for the memory map
+    mov ecx, 20 ; the size of the memory map entry, 20 bytes
+    ; ebx must be preserved for the nextr call of the function. So we don't change it.
+    int 0x15 ; call the function
+    jc GetMemDone ; if carry flag is set this time, means that we have reached the end of the memory map
+
+    test ebx, ebx 
+    ; if ebx is zero, means that we have reached the end of the memory map
+    ; if ebx is not zero, means that we have not reached the end of the memory map
+    jnz GetMemInfo
+
+GetMemDone:
+
+
+TestA20:
+    mov ax, 0xffff
+    mov es, ax
+    mov word[ds:0x7c00], 0xa200 ; 0:0x7c00 = 0x16 + 0x7c00 = 0x7c00
+    cmp word[es:0x7c10], 0xa200 ; 0xffff:0x7c10 = 0xffff0 x 16 + 0x7c10 = 0x107c00
+    jne SetA20LineDone
+    mov word[0x7c00], 0xb200
+    cmp word[es:0x7c10], 0xb200
+    je End
+
+SetA20LineDone:
+    xor ax, ax
+    mov es, ax
+    
 	mov ah, 0x13
 	mov al, 1
 	mov bx, 0xa
@@ -65,6 +114,6 @@ End:
 	jmp End
 
 DriveId: db 0
-Message: db "Kernel is loaded successfully!"
+Message: db "a20 line is on"
 MessageLen: equ $-Message
 ReadPacket: times 16 db 0
