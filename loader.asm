@@ -98,14 +98,48 @@ TestA20:
 SetA20LineDone:
     xor ax, ax
     mov es, ax
+
+SetVideoMode:
+    ; the function code in ah register means we want to set video mode
+    ; then we need to choose video mode, text mode in this case, by copy 3 to al register.
+    mov ax, 3
+    int 0x10 ; set video mode
+
+    ; clear the screen
+    ; the base address for text mode is b8000.
+    ; The size of screen we can print on is 80 (characters) * 25 (lines)
+    ; Every character takes 2 bytes, one for the character (ascii codes), one for the attribute
+    ; The lower half are foreground color and the higher half are background color.
+    ; The first position on the screen correspondends to the two bytes at b8000
+    ; The second position on the screen correspondends to the two bytes at b8002, and so on.
     
-	mov ah, 0x13
-	mov al, 1
-	mov bx, 0xa
-	xor dx, dx
-	mov bp, Message
-	mov cx, MessageLen
-	int 0x10
+    ; save the address of characters to register si and text mode address b8000 to di
+    ; note that the value b8000 is too large to fit in a 16-bit register, so we save b800 to es register
+    ; and zero the di register
+    ; when we reference the memory address b8000, we use es:di which is the same as b800:0
+    mov si, Message
+    mov ax, 0xb800
+    mov es, ax
+    xor di, di
+    ; we save the number of characters to cx register
+    mov cx, MessageLen
+    ; then we print characters one at a time
+
+PrintMessage:
+    ; We copy the data in memory porinted to by si which is the first character of message at this point.
+    mov al, [si]
+    ; then copy the data to the memory addressed by di which is b8000 at this point.
+    mov [es:di], al
+
+    ; specify attribute for the character
+    mov byte[es:di+1], 0xa ; 0xa is light green on black background
+    
+    add di, 2
+    add si, 1
+    ; because the character takes 2 bytes, we need to add 2 to di and the character stored in message 
+    ; takes 1 byte, we need to add 1 to si
+    loop PrintMessage
+
 
 ReadError:
 NotSupport:
@@ -114,6 +148,6 @@ End:
 	jmp End
 
 DriveId: db 0
-Message: db "a20 line is on"
+Message: db "Text mode is set"
 MessageLen: equ $-Message
 ReadPacket: times 16 db 0
