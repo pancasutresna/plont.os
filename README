@@ -1,0 +1,4 @@
+OS Development ~ Just another hobby OS
+
+run ```./build.sh``` to build
+run ```bochs``` to test
