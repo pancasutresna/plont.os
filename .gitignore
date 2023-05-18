@@ -1,4 +1,2 @@
-boot.bin
-loader.bin
-
-boot.img
+*.bin
+*.img

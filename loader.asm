@@ -173,15 +173,68 @@ PMEntry:
     mov ss, ax
     mov esp, 0x7c00 ; set stack pointer esp to 0x7c00
 
-    ; Print a message to the screen to indicate that we have entered protected mode.
-    ; the video memory address, the base address for text mode
-    ; and every character takes up 2 bytes of space in video memory
-    mov byte[0xb8000], 'P' ; the first byte is the character
-    mov byte[0xb8001], 0xa ; the second byte is the color attribute
+    ; Enable paging
+    ; this block of code basically find a free memory area and initialize the paging structure
+    ; which is used to translate the virtual address to physical address.
+    ; The addresses (0x80000 - 0x90000) may be used for BIOS data. We can use memory area from 0x70000 to 0x80000 instead.
+    cld
+    mov edi, 0x80000
+    xor eax, eax
+    mov ecx, 0x10000/4
+    rep stosd
+    
+    mov dword[0x80000], 0x81007
+    mov dword[0x81000], 10000111b
+
+    ; Then we load the GDT that we will use in 64-bit mode. The GDT is defined in the next section.
+    lgdt [Gdt64Ptr]
+    ; enable the 64-bit mode by setting the necessary bits.
+    ; The first register is cr4. The bit 5 in cr4 is the physical address extension bit or PAE bit.
+    ; we have to set it to 1 before activating 64-bit mode.
+    mov eax, cr4
+    or eax, (1 << 5)
+    mov cr4, eax
+
+    ; The next register is related to cr3 register, we copy the address of the page structure we just set up,
+    ; 80000 in this case to cr3 register
+    mov eax, 0x80000
+    mov cr3, eax
+    ; The address loaded to cr3 are physical address. So this is one of few cases we need to use physical address
+    ; in our code
+
+    ; enable long mode
+    ; extended feature enable register or efer register is the last register we need to set.
+    ; The bit 8 in efer register is the long mode enable bit. We set it to 1 to enable long mode.
+    ; to read and write a model specific register, we move the index of the register to ecx.
+    mov ecx, 0xc0000080
+    rdmsr ; read the value of the register to eax and edx
+    or eax, (1 << 8) ; The return value is in eax register. So we set the bit 8 in eax using or instruction
+    ; Then we write the value back to the register using wmsr instruction
+    wrmsr
+
+    ; enable paging by setting the bit 31 in register cr0
+    mov eax, cr0
+    or eax, (1 << 31)
+    mov cr0, eax
+
+    jmp 8:LMEntry 
+    ; Here we specify the segment selector 8, since each entry is 8 bytes and the code segment selector is 
+    ; the second entry and then the offset long mode entry
 
 PEnd:
     hlt
     jmp PEnd    
+
+[BITS 64]
+LMEntry:
+    mov rsp, 0x7c00
+
+    mov byte[0xb8000], 'L'
+    mov byte[0xb8001], 0xa
+
+LEnd:
+    hlt
+    jmp LEnd
 
 
 DriveId: db 0
@@ -262,3 +315,28 @@ Gdt32Ptr: dw Gdt32Len-1
 
 Idt32Ptr: dw 0
           dd 0
+
+Gdt64:
+    dq 0
+
+    ; |------------|------------|------------|-----------------|------------|------------|------------|
+    ; | D (bit 54) | L (bit 53) | P (bit 47) | DPL (bit 46-45) | 1 (bit 44) | 1 (bit 43) | C (bit 42) |
+    ; |------------|------------|------------|-----------------|------------|------------|------------|
+    ; | 0          | 1          | 1          | 0 0             | 1          | 1          | 0          | -> 0x0020980000000000 in hex
+    ; |------------|------------|------------|-----------------|------------|------------|------------|
+     
+    ; The Conforming bit is set to 0, since we only use con-conforming code segment in our system.
+    ; The next 1s means that the descriptor is code segment descriptor.
+    ; The DPL indicates privilege level of the code segment, we set DPL to 0, when we load the descriptor
+    ; to cs register and jump to 64-bit mode the CPL will be 0 indicating that we are at ring0.
+    ; Present bit (P) is set to 1, otherwise the CPU exception is generated of we trey to load the descriptor.
+    ; The Long bit (L) is set to 1 indicating that the code segment runs in 64-bit mode. If it is set to 0, then
+    ; it will runs in compatibility mode.
+    ; The D bit can only be set to 0 if the long bit is set. It indicates the default operand size. We set it to 0
+    dq 0x0020980000000000 
+    ; 64-bit code segment descriptor, we dont need to load the data segment because we runing in ring0
+
+Gdt64Len: equ $-Gdt64
+
+Gdt64Ptr: dw Gdt64Len-1
+          dd Gdt64
