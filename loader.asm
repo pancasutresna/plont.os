@@ -30,14 +30,15 @@ start:
 	jz NotSupport
 
 LoadKernel:
-    mov si, ReadPacket
-    mov word[si], 0x10
+    mov si,ReadPacket
+    mov word[si],0x10
     mov word[si+2], 100
     mov word[si+4], 0
-    mov word[si+6], 0x1000 ; offset segment 0x1000:0 = 0x1000 * 16 + 0 = 0x10000
+    mov word[si+6], 0x1000 
+    ; offset segment 0x1000:0 = 0x1000 * 16 + 0 = 0x10000
     ; the boot  file resides in the first sector,
     ; the loader file occupies the next five sectors. so we write our kernel from the 7th sector
-    ; offset 0x1000:6 = 0x1000 * 16 + 6 = 0x10006\
+    ; offset 0x1000:6 = 0x1000 * 16 + 6 = 0x10006
     mov dword[si+8], 6 ; sector value is 0-based value, so 6 means the 7th sector
     
     
@@ -229,8 +230,27 @@ PEnd:
 LMEntry:
     mov rsp, 0x7c00
 
-    mov byte[0xb8000], 'L'
-    mov byte[0xb8001], 0xa
+    ; clear direction flag, so that the move instruction will process data from low
+    ; memory address to high memory address which mean the data is copied is copied
+    ; in forward direction.
+    ; the destination address is tored in rdi register and the source address is stored
+    ; in rsi register.
+    cld
+    mov rdi, 0x200000
+    mov rsi, 0x10000
+    ; the kernel is in memory 10000 right now and we want to copy it into the location 200000
+    ; register rcx is used as a counter, since we want the move instruction to execute multiple times.
+    ; move qword will copy the 8-byte data each time.
+    mov rcx, 51200/8
+    ; when we load kernel from disk into memory, we read 100 sectors. Each sector is 512 bytes
+    ; so the total size is 51200 bytes.
+
+    ; rcx specifies the times move qword instruction will repeat.
+    ; after the move instruction executes, the kernel is copied into the address 200000
+    rep movsq
+
+    jmp 0x200000 ; jump to the kernel
+
 
 LEnd:
     hlt
