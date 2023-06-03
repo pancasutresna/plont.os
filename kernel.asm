@@ -90,7 +90,7 @@ KernelEntry:
     
     mov rsp,0x200000
     call KMain
-    sti
+    ; sti -> disable interrupt
 End:
     hlt
     jmp End
