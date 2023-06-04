@@ -32,12 +32,12 @@ extern KMain
 global start
 
 start:
-    mov rax, Gdt64Ptr
+    mov rax,Gdt64Ptr
     lgdt [rax]
 
 SetTss:
     mov rax,Tss
-    mov rdi, TssDesc
+    mov rdi,TssDesc
     mov [rdi+2],ax
     shr rax,16
     mov [rdi+4],al
@@ -81,19 +81,16 @@ InitPIC:
     mov al,11111111b
     out 0xa1,al
 
-    mov rax, KernelEntry
+    mov rax,KernelEntry
     push 8
     push rax
     db 0x48
     retf
 
-KernelEntry: 
-    xor ax,ax
-    mov ss,ax
-    
+KernelEntry:
     mov rsp,0xffff800000200000
     call KMain
-    ; sti -> disable interrupt
+    
 End:
     hlt
     jmp End

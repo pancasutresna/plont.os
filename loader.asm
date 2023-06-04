@@ -33,7 +33,7 @@ GetMemInfoStart:
     mov eax,0xe820
     mov edx,0x534d4150
     mov ecx,20
-    mov dword[0x9000], 0
+    mov dword[0x9000],0
     mov edi,0x9008
     xor ebx,ebx
     int 0x15
@@ -41,7 +41,7 @@ GetMemInfoStart:
 
 GetMemInfo:
     add edi,20
-    inc dword[0x9000]
+    inc dword[0x9000]   
     test ebx,ebx
     jz GetMemDone
 
@@ -50,6 +50,7 @@ GetMemInfo:
     mov ecx,20
     int 0x15
     jnc GetMemInfo
+
 
 GetMemDone:
 TestA20:
@@ -62,7 +63,6 @@ TestA20:
     cmp word[es:0x7c10],0xb200
     je End
     
-
 SetA20LineDone:
     xor ax,ax
     mov es,ax
@@ -105,10 +105,10 @@ PMEntry:
     mov dword[0x70000],0x71003
     mov dword[0x71000],10000011b
 
-    mov eax, (0xffff800000000000>>39)
-    and eax, 0x1ff
-    mov dword[0x70000+eax*8], 0x72003
-    mov dword[0x72000], 10000011b
+    mov eax,(0xffff800000000000>>39)
+    and eax,0x1ff
+    mov dword[0x70000+eax*8],0x72003
+    mov dword[0x72000],10000011b
 
     lgdt [Gdt64Ptr]
 
@@ -144,7 +144,7 @@ LMEntry:
     mov rcx,51200/8
     rep movsq
 
-    mov rax, 0xffff800000200000
+    mov rax,0xffff800000200000
     jmp rax
     
 LEnd:

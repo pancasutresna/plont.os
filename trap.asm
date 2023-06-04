@@ -1,3 +1,4 @@
+
 section .text
 extern handler
 global vector0
@@ -23,12 +24,13 @@ global vector39
 global eoi
 global read_isr
 global load_idt
+global load_cr3
 
 Trap:
     push rax
-    push rbx
+    push rbx  
     push rcx
-    push rdx
+    push rdx  	  
     push rsi
     push rdi
     push rbp
@@ -41,31 +43,30 @@ Trap:
     push r14
     push r15
 
-    inc byte[0xb8010]
-    mov byte[0xb8011], 0xe
-
-    mov rdi, rsp
+    mov rdi,rsp
     call handler
 
 TrapReturn:
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rbp
-    pop rdi
-    pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
+    pop	r15
+    pop	r14
+    pop	r13
+    pop	r12
+    pop	r11
+    pop	r10
+    pop	r9
+    pop	r8
+    pop	rbp
+    pop	rdi
+    pop	rsi  
+    pop	rdx
+    pop	rcx
+    pop	rbx
+    pop	rax       
 
-    add rsp, 16
+    add rsp,16
     iretq
+
+
 
 vector0:
     push 0
@@ -84,70 +85,70 @@ vector2:
 
 vector3:
     push 0
-    push 3
-    jmp Trap
+    push 3	
+    jmp Trap 
 
 vector4:
     push 0
-    push 4
-    jmp Trap
+    push 4	
+    jmp Trap   
 
 vector5:
     push 0
     push 5
-    jmp Trap
+    jmp Trap    
 
 vector6:
     push 0
-    push 6
-    jmp Trap
+    push 6	
+    jmp Trap      
 
 vector7:
     push 0
-    push 7
-    jmp Trap
+    push 7	
+    jmp Trap  
 
 vector8:
     push 8
-    jmp Trap
+    jmp Trap  
 
 vector10:
-    push 10
-    jmp Trap
-
+    push 10	
+    jmp Trap 
+                   
 vector11:
-    push 11
+    push 11	
     jmp Trap
-
+    
 vector12:
-    push 12
-    jmp Trap
-
+    push 12	
+    jmp Trap          
+          
 vector13:
-    push 13
+    push 13	
     jmp Trap
-
+    
 vector14:
-    push 14
-    jmp Trap
+    push 14	
+    jmp Trap 
 
 vector16:
     push 0
-    push 16
-    jmp Trap
-
+    push 16	
+    jmp Trap          
+          
 vector17:
-    push 17
-    jmp Trap
-
+    push 17	
+    jmp Trap                         
+                                                          
 vector18:
     push 0
-    push 18
-    jmp Trap
-
+    push 18	
+    jmp Trap 
+                   
 vector19:
     push 0
-    push 19
+    push 19	
     jmp Trap
 
 vector32:
@@ -161,16 +162,22 @@ vector39:
     jmp Trap
 
 eoi:
-    mov al, 0x20
-    out 0x20, al
+    mov al,0x20
+    out 0x20,al
     ret
 
 read_isr:
-    mov al, 11
-    out 0x20, al
-    in al, 0x20
+    mov al,11
+    out 0x20,al
+    in al,0x20
     ret
 
 load_idt:
     lidt [rdi]
     ret
+
+load_cr3:
+    mov rax,rdi
+    mov cr3,rax
+    ret
+
