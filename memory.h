@@ -29,7 +29,7 @@ typedef PD* PDPTR;
 #define PTE_U 4
 #define PTE_ENTRY 0x80
 #define KERNEL_BASE 0xffff800000000000
-#define PAGE_SIZE (2*1024*1024)
+#define PAGE_SIZE (2*1024*1024) // 2MB per page (huge page) 
 
 #define PA_UP(v) ((((uint64_t)v + PAGE_SIZE-1) >> 21) << 21)
 #define PA_DOWN(v) (((uint64_t)v >> 21) << 21)

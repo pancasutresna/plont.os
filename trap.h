@@ -68,5 +68,6 @@ void init_idt(void);
 void eoi(void);
 void load_idt(struct IdtPtr *ptr);
 unsigned char read_isr(void);
+uint64_t read_cr2(void);
 
 #endif

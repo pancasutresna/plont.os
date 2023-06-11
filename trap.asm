@@ -25,6 +25,8 @@ global eoi
 global read_isr
 global load_idt
 global load_cr3
+global pstart
+global read_cr2
 
 Trap:
     push rax
@@ -65,8 +67,6 @@ TrapReturn:
 
     add rsp,16
     iretq
-
-
 
 vector0:
     push 0
@@ -180,4 +180,12 @@ load_cr3:
     mov rax,rdi
     mov cr3,rax
     ret
+
+read_cr2:
+    mov rax, cr2 ; read cr2 into rax (rax is the return value)
+    ret
+
+pstart:
+    mov rsp, rdi ; set stack pointer to the end of the kernel image in memory (rdi)
+    jmp TrapReturn ; return to the instruction that caused the trap
 
