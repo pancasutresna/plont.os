@@ -6,6 +6,7 @@
 
 static struct IdtPtr idt_pointer;
 static struct IdtEntry vectors[256];
+static uint64_t ticks;
 
 static void init_idt_entry(struct IdtEntry *entry, uint64_t addr, uint8_t attribute)
 {
@@ -45,12 +46,24 @@ void init_idt(void)
     load_idt(&idt_pointer);
 }
 
+uint64_t get_ticks(void) 
+{
+    return ticks;
+}
+
+static void timer_handler(void)
+{
+    ticks++;
+    wake_up(-1);
+}
+
 void handler(struct TrapFrame *tf)
 {
     unsigned char isr_value;
 
     switch (tf->trapno) {
         case 32:  
+            timer_handler();
             eoi();
             break;
             
