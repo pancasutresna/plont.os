@@ -6,15 +6,15 @@ global memcmp
 
 memset:
     cld
-    mov ecx, edx
-    mov al, sil
+    mov ecx,edx
+    mov al,sil
     rep stosb
     ret
 
 memcmp:
     cld
-    xor eax, eax
-    mov ecx, edx
+    xor eax,eax
+    mov ecx,edx
     repe cmpsb
     setnz al
     ret
@@ -22,22 +22,23 @@ memcmp:
 memcpy:
 memmove:
     cld
-    cmp rsi, rdi
+    cmp rsi,rdi
     jae .copy
-    mov r8, rsi
-    add r8, rdx
-    cmp r8, rdi
+    mov r8,rsi
+    add r8,rdx
+    cmp r8,rdi
     jbe .copy
 
 .overlap:
     std
-    add rdi, rdx
-    add rsi, rdx
-    sub rdi, 1
-    sub rsi, 1
+    add rdi,rdx
+    add rsi,rdx
+    sub rdi,1
+    sub rsi,1
 
 .copy:
-    mov ecx, edx
+    mov ecx,edx
     rep movsb
     cld
     ret
+    
