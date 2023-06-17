@@ -8,7 +8,6 @@
 extern struct TSS Tss;
 static struct Process process_table[NUM_PROC];
 static int pid_num = 1;
-void main(void);
 
 static void set_tss(struct Process *proc)
 {
@@ -50,7 +49,7 @@ static void set_process_entry(struct Process *proc)
 
     proc->page_map = setup_kvm(); // setup kernel page table for process
     ASSERT(proc->page_map != 0);
-    ASSERT(setup_uvm(proc->page_map, (uint64_t)main, PAGE_SIZE));
+    ASSERT(setup_uvm(proc->page_map, (uint64_t)P2V(0x20000), 5120));
 }
 
 void init_process(void)
@@ -66,11 +65,5 @@ void launch(void)
     set_tss(&process_table[0]); // set TSS for process 0
     switch_vm(process_table[0].page_map); // switch to process 0's page table
     pstart(process_table[0].tf); // start process 0 with its trap frame
-}
-
-void main(void)
-{
-    char *p = (char*)0xffff800000200020; // 0x200020 is the address of the first page of the process
-    *p = 1; // page fault here because the page is not mapped yet
 }
 

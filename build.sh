@@ -9,8 +9,10 @@ gcc -std=c99 -mcmodel=large -ffreestanding -fno-stack-protector -mno-red-zone -c
 gcc -std=c99 -mcmodel=large -ffreestanding -fno-stack-protector -mno-red-zone -c debug.c 
 gcc -std=c99 -mcmodel=large -ffreestanding -fno-stack-protector -mno-red-zone -c memory.c 
 gcc -std=c99 -mcmodel=large -ffreestanding -fno-stack-protector -mno-red-zone -c process.c 
-ld -nostdlib -T link.lds -o kernel kernel.o main.o trapa.o trap.o liba.o print.o debug.o memory.o process.o
+gcc -std=c99 -mcmodel=large -ffreestanding -fno-stack-protector -mno-red-zone -c syscall.c 
+ld -nostdlib -T link.lds -o kernel kernel.o main.o trapa.o trap.o liba.o print.o debug.o memory.o process.o syscall.o
 objcopy -O binary kernel kernel.bin 
 dd if=boot.bin of=boot.img bs=512 count=1 conv=notrunc
 dd if=loader.bin of=boot.img bs=512 count=5 seek=1 conv=notrunc
 dd if=kernel.bin of=boot.img bs=512 count=100 seek=6 conv=notrunc
+dd if=user.bin of=boot.img bs=512 count=10 seek=106 conv=notrunc
