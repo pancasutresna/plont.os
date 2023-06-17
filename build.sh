@@ -1,3 +1,12 @@
+cd lib/
+./build.sh
+cd ../user1/
+./build.sh
+cd ../user2/
+./build.sh
+cd ../user3/
+./build.sh
+cd ../
 nasm -f bin -o boot.bin boot.asm
 nasm -f bin -o loader.bin loader.asm
 nasm -f elf64 -o kernel.o kernel.asm
