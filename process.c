@@ -176,7 +176,7 @@ void wake_up(int wait)
 void exit(void)
 {
     struct ProcessControl *process_control;
-    struct Process *process;
+    struct Process* process;
     struct HeadList *list;
 
     process_control = get_pc();
@@ -186,7 +186,7 @@ void exit(void)
     list = &process_control->kill_list;
     append_list_tail(list, (struct List*)process);
 
-    wake_up(1); 
+    wake_up(1);
     schedule();
 }
 
@@ -199,16 +199,16 @@ void wait(void)
     process_control = get_pc();
     list = &process_control->kill_list;
 
-    while(1)
-    {
+    while (1) {
         if (!is_list_empty(list)) {
-            process = (struct Process*)remove_list_head(list);
+            process = (struct Process*)remove_list_head(list); 
             ASSERT(process->state == PROC_KILLED);
 
             kfree(process->stack);
-            free_vm(process->page_map);
-            memset(process, 0, sizeof(struct Process));
-        } else {
+            free_vm(process->page_map);            
+            memset(process, 0, sizeof(struct Process));   
+        }
+        else {
             sleep(1);
         }
     }

@@ -79,7 +79,7 @@ void* kalloc(void)
         free_memory.next = page_address->next;            
     }
     
-    return page_address;
+    return (void*)page_address;
 }
 
 static PDPTR find_pml4t_entry(uint64_t map, uint64_t v, int alloc, uint32_t attribute)
