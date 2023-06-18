@@ -3,6 +3,8 @@ global writeu
 global sleepu
 global exitu
 global waitu
+global keyboard_readu
+global get_total_memoryu
 
 writeu:
     sub rsp,16
@@ -47,7 +49,21 @@ waitu:
     
     ret
 
+keyboard_readu:
+    mov eax, 4
+    xor edi, edi
 
+    int 0x80
+
+    ret
+
+get_total_memoryu:
+    mov eax, 5
+    xor edi, edi
+
+    int 0x80
+
+    ret
 
 
 
